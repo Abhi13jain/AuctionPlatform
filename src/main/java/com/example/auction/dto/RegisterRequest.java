@@ -15,6 +15,7 @@ public class RegisterRequest {
     private String name;
     private String email;
     private String password;
+    private String role;
 
     /**
      * What this method does in simple English:
@@ -54,4 +55,7 @@ public class RegisterRequest {
      */
     public String getPassword() { return password; }
     public void setPassword(String password) { this.password = password; }
+
+    public String getRole() { return role; }
+    public void setRole(String role) { this.role = role; }
 }

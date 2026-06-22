@@ -57,8 +57,14 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
             // Cut off the "Bearer " part to get just the token string
             jwt = authorizationHeader.substring(7);
-            // Use our JwtUtil to extract the username (email) from the token
-            username = jwtUtil.extractUsername(jwt);
+            try {
+                // Use our JwtUtil to extract the username (email) from the token
+                username = jwtUtil.extractUsername(jwt);
+            } catch (Exception e) {
+                // If the token is tampered with, expired, or the server restarted (new secret key),
+                // this will catch the exception and simply ignore the invalid token instead of crashing with a 500 Error.
+                System.out.println("Invalid JWT Token: " + e.getMessage());
+            }
         }
 
         // 3. If we found a username, and the user isn't already logged into the current security context...

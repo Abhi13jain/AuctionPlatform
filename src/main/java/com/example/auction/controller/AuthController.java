@@ -73,8 +73,12 @@ public class AuthController {
         String hashedPassword = passwordEncoder.encode(registerRequest.getPassword());
         newUser.setPassword(hashedPassword);
         
-        // 4. Assign the default role (BUYER)
-        newUser.setRole(Role.BUYER);
+        // 4. Assign the role provided by the frontend, or default to BUYER
+        if (registerRequest.getRole() != null) {
+            newUser.setRole(Role.valueOf(registerRequest.getRole().toUpperCase()));
+        } else {
+            newUser.setRole(Role.BUYER);
+        }
 
         // 5. Save the new user to the database
         userRepository.save(newUser);
