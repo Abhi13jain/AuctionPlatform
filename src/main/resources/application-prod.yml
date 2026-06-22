@@ -1,0 +1,25 @@
+# These settings override the base application.yml when we set SPRING_PROFILES_ACTIVE=prod
+# In production (like running inside Docker), we use the environment variables passed in by docker-compose
+
+spring:
+  datasource:
+    # Notice we don't use 'localhost'. We use the Docker variable ${DB_URL} because the database is running in a different container on the Docker network
+    url: ${DB_URL}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+  
+  jpa:
+    hibernate:
+      # --- HIBERNATE DDL-AUTO TRADEOFFS ---
+      # 1. 'validate': (Strict Production) Only checks if tables exist. Crashes if they don't. Safest, but requires manual DB scripts (Flyway/Liquibase).
+      # 2. 'update': (Development/Early Prod) Automatically creates missing tables and adds new columns. Doesn't delete data. Great for our current stage!
+      # 3. 'create': (Testing) Drops all existing tables and rebuilds them fresh every time the app starts. Causes complete data loss on reboot.
+      # 4. 'create-drop': (Unit Testing) Creates tables on startup, drops them when the app shuts down. Purely for isolated tests.
+      
+      # Since we are deploying a fresh Docker database without Flyway/Liquibase, we MUST use 'update' so Hibernate can build the tables for us.
+      ddl-auto: update
+  
+  data:
+    redis:
+      # We use the internal docker network name 'redis' instead of localhost
+      host: ${REDIS_HOST}

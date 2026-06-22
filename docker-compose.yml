@@ -1,0 +1,64 @@
+# What docker-compose is doing in plain English:
+# While Docker packs one app into a box, docker-compose is the factory manager. Our application requires three separate boxes (Spring Boot, PostgreSQL, and Redis) to run properly. docker-compose launches all three boxes at the exact same time, plugs them into the same private digital network, and manages how they start up together.
+
+# Why all 3 services need to talk to each other:
+# - The 'app' (Spring Boot) is the brain. It needs to talk to 'postgres' to permanently save user bids.
+# - The 'app' also needs to talk to 'redis' to instantly look up the current auction price without slowing down.
+# - If they can't talk over the same network, the brain is disconnected from its memory!
+
+version: '3.8'
+services:
+  # The Database Service
+  postgres:
+    image: postgres:15-alpine
+    container_name: auction-postgres
+    # Reads the database name, user, and password from our secure .env file
+    environment:
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    ports:
+      - "5432:5432"
+    # What health checks do:
+    # A database takes a few seconds to boot up and initialize its internal files. This healthcheck constantly pings the database every 5 seconds asking "Are you ready yet?".
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # The Redis Cache Service
+  redis:
+    image: redis:7-alpine
+    container_name: auction-redis
+    ports:
+      - "6379:6379"
+    # Health check to ensure Redis is fully awake and accepting connections
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  # Our Spring Boot Application Service
+  app:
+    # This tells docker-compose to look at our Dockerfile and build the image from scratch
+    build: .
+    container_name: auction-app
+    ports:
+      - "8080:8080"
+    environment:
+      # We tell Spring Boot how to find the database and redis boxes on the internal docker network
+      - SPRING_PROFILES_ACTIVE=${SPRING_PROFILES_ACTIVE}
+      - DB_URL=jdbc:postgresql://postgres:5432/${DB_NAME}
+      - DB_USERNAME=${DB_USER}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - REDIS_HOST=redis
+    # Why the app should wait for postgres to be ready before starting:
+    # If Spring Boot starts 2 seconds faster than PostgreSQL, it will try to connect to a database that isn't awake yet, causing the application to crash immediately. 
+    # 'depends_on condition: service_healthy' forces Spring Boot to patiently wait until PostgreSQL and Redis pass their health checks before it attempts to boot up.
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy

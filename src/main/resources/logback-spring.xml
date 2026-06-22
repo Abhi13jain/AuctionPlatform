@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+    <!-- 
+        Why logging and monitoring matter in a real system:
+        This file tells our logger (Logback) HOW to format the logs. Instead of plain text, we tell it to output raw JSON.
+        
+        What "production-grade" means for this feature:
+        Cloud monitoring tools (like AWS CloudWatch, Datadog, Splunk) cannot easily read plain text paragraphs. They expect logs in strict JSON format so they can instantly filter by "level: ERROR" or "duration > 500ms". This file makes our logs cloud-ready.
+    -->
+    <appender name="jsonConsoleAppender" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder class="net.logstash.logback.encoder.LogstashEncoder" />
+    </appender>
+
+    <root level="INFO">
+        <appender-ref ref="jsonConsoleAppender" />
+    </root>
+
+    <!-- Suppress extremely noisy spring logs unless they are errors -->
+    <logger name="org.springframework" level="WARN"/>
+    <logger name="com.example.auction" level="INFO"/>
+</configuration>
