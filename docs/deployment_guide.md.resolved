@@ -1,0 +1,80 @@
+# MotoAuction Deployment Guide
+
+Deploying a real-time WebSocket application requires a slightly different approach than a standard static website. Because this platform uses **Spring Boot**, **PostgreSQL**, **Redis**, and **WebSockets**, we recommend a split-deployment strategy for maximum performance and cost-effectiveness.
+
+---
+
+## 🏗️ Architecture Overview
+
+Your application is split into two halves:
+1. **The Frontend:** A static React (Vite) application.
+2. **The Backend:** A containerized Spring Boot engine running alongside PostgreSQL and Redis databases.
+
+---
+
+## 🟢 Part 1: Deploying the Frontend (Vercel)
+
+**Recommended Platform:** [Vercel](https://vercel.com) or [Netlify](https://netlify.com)
+**Why?** They are completely free, automatically deploy from GitHub, and serve static React files via global CDNs so your website loads instantly anywhere in the world.
+
+### Steps:
+1. **Push to GitHub:** Commit and push your entire codebase to a GitHub repository.
+2. **Create a Vercel Account:** Go to Vercel.com and log in with GitHub.
+3. **Import Project:** Click "Add New Project" and select your repository.
+4. **Configure the Build:**
+   * **Framework Preset:** Vercel will automatically detect `Vite`.
+   * **Root Directory:** Edit this and set it to `frontend` (since your React code is inside the `frontend` folder, not the root).
+   * **Build Command:** `npm run build`
+   * **Output Directory:** `dist`
+5. **Environment Variables:**
+   * Add a new variable: `VITE_API_URL`
+   * Value: `https://api.yourbackend.com/api` *(You will update this later once your backend is deployed).*
+6. **Deploy:** Click deploy. Your frontend is now live on a public URL!
+
+---
+
+## 🔴 Part 2: Deploying the Backend (Render)
+
+**Recommended Platform:** [Render.com](https://render.com)
+**Why?** Render automatically builds your Spring Boot Docker container directly from GitHub, and provides managed, one-click setups for both PostgreSQL and Redis. They handle the SSL certificates (HTTPS) for you automatically!
+
+### Steps:
+
+#### 1. Setup the Databases (PostgreSQL & Redis)
+1. Log in to Render.com.
+2. Click **New +** -> **PostgreSQL**. Name it `auction-db`. Click **Create Database**.
+3. Click **New +** -> **Redis**. Name it `auction-redis`. Click **Create Redis**.
+4. Once both are created, find their **Internal Database URLs**. (Render allows services on the same account to talk securely to each other using internal URLs).
+
+#### 2. Deploy the Spring Boot API (Web Service)
+1. Click **New +** -> **Web Service**.
+2. Connect your GitHub repository containing the backend code.
+3. **Environment:** Choose `Docker`.
+4. Render will automatically detect your `Dockerfile`. 
+5. Scroll down to **Environment Variables** and add the variables your Spring Boot app needs to connect to the databases you just created:
+   * `SPRING_DATASOURCE_URL`: `jdbc:postgresql://<your-internal-postgres-url>`
+   * `SPRING_DATASOURCE_USERNAME`: `<your-db-username>`
+   * `SPRING_DATASOURCE_PASSWORD`: `<your-db-password>`
+   * `SPRING_REDIS_HOST`: `<your-internal-redis-host>`
+   * `SPRING_REDIS_PORT`: `<your-redis-port>`
+6. Click **Create Web Service**. Render will now download your code, build the Docker container, and start it!
+
+---
+
+## 🔗 Part 3: Connecting Them Together
+
+Since you used Render for the backend and Vercel for the frontend, both services automatically give you secure `https://` URLs, which means WebSockets will work out of the box without any complex Nginx or SSL setup!
+
+1. **Get your Render API URL:** 
+   * Go to your Render Web Service dashboard.
+   * Copy the public URL provided at the top left (e.g., `https://auction-backend-xyz.onrender.com`).
+2. **Update CORS in Backend (Optional but Recommended):**
+   * If your Spring Boot app has a hardcoded CORS policy, ensure it allows requests from your new Vercel domain. You can pass the Vercel domain as another Environment Variable in Render if your code supports it.
+3. **Update Frontend:**
+   * Go back to your Vercel Dashboard for your frontend project.
+   * Go to **Settings** -> **Environment Variables**.
+   * Update the `VITE_API_URL` to point to your new Render backend URL:
+     * Value: `https://auction-backend-xyz.onrender.com/api`
+   * Trigger a **Redeploy** in Vercel to lock in the new variable.
+
+**🎉 Congratulations! Your real-time MotoAuction platform is now securely deployed and live on the internet!**
