@@ -36,7 +36,6 @@ const LiveAuctionRoom = () => {
     fetchInitialData();
   }, [id]);
 
-  // 2. Real-Time Socket Connection
   const handleIncomingMessage = (data) => {
     // If the backend broadcasted an updated Auction state
     if (data.currentPrice !== undefined) {
@@ -44,7 +43,12 @@ const LiveAuctionRoom = () => {
     } 
     // If the backend broadcasted a new Bid event
     else if (data.amount !== undefined) {
-      setBids(prev => [data, ...prev]);
+      setBids(prev => {
+        // Prevent duplicates caused by React StrictMode double-subscriptions
+        const isDuplicate = prev.some(b => b.amount === data.amount && b.userEmail === data.userEmail);
+        if (isDuplicate) return prev;
+        return [data, ...prev];
+      });
       setAuction(prev => ({ ...prev, currentPrice: data.amount }));
     }
   };
@@ -71,10 +75,11 @@ const LiveAuctionRoom = () => {
      * If the server later rejects the bid (e.g., someone else bid higher a millisecond before), the WebSocket will overwrite this with the real truth.
      */
     setAuction(prev => ({ ...prev, currentPrice: amount }));
-    setBids(prev => [{ id: 'temp', amount, userId: user.email, timestamp: new Date().toISOString() }, ...prev]);
+    // We do NOT optimistically update the bids array here, because the WebSocket will instantly broadcast it back to us.
+    // If we update it here AND via the WebSocket, it will appear twice!
     
     // Send it through the websocket
-    placeBid(amount);
+    placeBid(amount, user.email);
     setBidAmount('');
   };
 
@@ -97,22 +102,37 @@ const LiveAuctionRoom = () => {
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
         {/* Left Column: Details */}
-        <div className="bg-white p-6 rounded-xl shadow border border-gray-100 flex flex-col">
+        <div className="bg-dark-800 p-6 rounded-xl shadow-2xl border border-dark-700 flex flex-col relative overflow-hidden">
+          {/* Subtle gradient background for premium feel */}
+          <div className="absolute top-0 right-0 -mr-20 -mt-20 w-64 h-64 rounded-full bg-brand-500 opacity-5 blur-[100px]"></div>
           <div className="flex justify-between items-center mb-4">
-            <h1 className="text-2xl font-black text-gray-900 truncate">Motorcycle #{auction.motorcycleId}</h1>
-            <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider ${connectionStatus === 'Connected' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+            <h1 className="text-3xl font-display uppercase tracking-wider text-white truncate z-10">
+              {auction.motorcycle ? `${auction.motorcycle.year} ${auction.motorcycle.brand} ${auction.motorcycle.title}` : `Motorcycle #${auction.motorcycleId}`}
+            </h1>
+            <span className={`px-3 py-1 rounded-sm text-xs font-bold uppercase tracking-widest z-10 ${connectionStatus === 'Connected' ? 'bg-green-500/10 text-green-400 border border-green-500/20' : 'bg-red-500/10 text-red-400 border border-red-500/20'}`}>
               {connectionStatus}
             </span>
           </div>
 
-          <div className="bg-gray-50 p-6 rounded-xl mb-6 text-center">
-            <p className="text-sm font-semibold text-gray-500 uppercase tracking-widest mb-2">Current Bid</p>
-            <p className="text-5xl font-black text-brand-600">${auction.currentPrice}</p>
+          {auction.motorcycle && auction.motorcycle.imageUrls && auction.motorcycle.imageUrls.length > 0 && (
+            <div className="flex overflow-x-auto gap-4 mb-6 pb-2 snap-x z-10 scrollbar-hide">
+              {auction.motorcycle.imageUrls.map((url, i) => (
+                <img key={i} src={url} alt={`Motorcycle ${i}`} className="w-full h-72 object-cover rounded-lg shadow-lg border border-dark-700 flex-shrink-0 snap-center" />
+              ))}
+            </div>
+          )}
+          {auction.motorcycle && auction.motorcycle.description && (
+            <p className="text-gray-400 mb-8 text-sm leading-relaxed z-10">{auction.motorcycle.description}</p>
+          )}
+
+          <div className="bg-dark-900/50 border border-dark-700 p-6 rounded-xl mb-6 text-center z-10 shadow-inner">
+            <p className="text-xs font-bold text-gray-500 uppercase tracking-[0.2em] mb-2">Current Bid</p>
+            <p className="text-6xl font-display font-black text-brand-500 tracking-wider">${auction.currentPrice}</p>
           </div>
 
-          <div className="bg-gray-900 text-white p-6 rounded-xl text-center mb-6">
-            <p className="text-sm font-semibold text-gray-400 uppercase tracking-widest mb-2">Time Remaining</p>
-            <p className={`text-4xl font-black font-mono ${isEnded ? 'text-red-500' : 'text-white'}`}>{timeLeft}</p>
+          <div className="bg-brand-600 text-white p-6 rounded-xl text-center mb-8 z-10 shadow-lg shadow-brand-500/20">
+            <p className="text-xs font-bold text-brand-100 uppercase tracking-[0.2em] mb-2">Time Remaining</p>
+            <p className={`text-5xl font-display font-black tracking-widest ${isEnded ? 'text-dark-900' : 'text-white'}`}>{timeLeft}</p>
           </div>
 
           {/* Bid Form */}
@@ -127,12 +147,12 @@ const LiveAuctionRoom = () => {
                 onChange={(e) => setBidAmount(e.target.value)}
                 disabled={isEnded}
                 placeholder={`> $${auction.currentPrice}`}
-                className="flex-grow px-4 py-3 text-lg border-2 border-gray-300 rounded-lg focus:ring-4 focus:ring-brand-500/20 focus:border-brand-500 outline-none transition disabled:bg-gray-100 disabled:cursor-not-allowed"
+                className="flex-grow px-6 py-4 text-xl font-display tracking-wider bg-dark-900 border border-dark-600 rounded-lg text-white focus:ring-2 focus:ring-brand-500 focus:border-brand-500 outline-none transition disabled:bg-dark-800 disabled:cursor-not-allowed placeholder-gray-600"
               />
               <button 
                 type="submit" 
                 disabled={isEnded || connectionStatus !== 'Connected'}
-                className="bg-brand-600 text-white font-bold px-8 py-3 rounded-lg hover:bg-brand-700 transition disabled:bg-gray-400 disabled:cursor-not-allowed uppercase tracking-wider"
+                className="bg-brand-600 text-white font-display font-bold px-10 py-4 text-xl rounded-lg hover:bg-brand-500 transition disabled:bg-dark-600 disabled:text-gray-400 disabled:cursor-not-allowed uppercase tracking-widest shadow-lg shadow-brand-500/20"
               >
                 Bid
               </button>
@@ -141,21 +161,21 @@ const LiveAuctionRoom = () => {
         </div>
 
         {/* Right Column: Bid History */}
-        <div className="bg-white p-6 rounded-xl shadow border border-gray-100 flex flex-col max-h-[600px]">
-          <h2 className="text-xl font-bold text-gray-900 mb-4 border-b pb-2">Live Activity</h2>
-          <div className="overflow-y-auto flex-grow space-y-3 pr-2">
+        <div className="bg-dark-800 p-6 rounded-xl shadow-2xl border border-dark-700 flex flex-col max-h-[700px]">
+          <h2 className="text-xl font-display font-bold text-white mb-6 uppercase tracking-widest border-b border-dark-700 pb-4">Live Activity</h2>
+          <div className="overflow-y-auto flex-grow space-y-3 pr-2 scrollbar-thin scrollbar-thumb-dark-600 scrollbar-track-transparent">
             {bids.length === 0 ? (
-              <p className="text-gray-500 text-center py-10 font-medium">No bids yet. Be the first!</p>
+              <p className="text-gray-500 text-center py-10 font-medium">No bids yet. Set the pace!</p>
             ) : (
               bids.map((bid, index) => (
-                <div key={bid.id || index} className="flex justify-between items-center p-3 bg-gray-50 rounded-lg border border-gray-100 hover:border-brand-200 transition">
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-full bg-brand-100 text-brand-600 flex items-center justify-center font-bold text-sm">
-                      {bid.userId?.charAt(0).toUpperCase() || '?'}
+                <div key={bid.id || index} className="flex justify-between items-center p-4 bg-dark-900/50 rounded-lg border border-dark-700 hover:border-brand-500/50 transition group">
+                  <div className="flex items-center gap-4">
+                    <div className="w-10 h-10 rounded-sm bg-brand-500/10 text-brand-500 flex items-center justify-center font-display font-bold text-lg border border-brand-500/20">
+                      {bid.userEmail?.charAt(0).toUpperCase() || '?'}
                     </div>
-                    <span className="font-medium text-gray-700 truncate max-w-[120px]">{bid.userId || 'Unknown'}</span>
+                    <span className="font-medium text-gray-300 truncate max-w-[120px]">{bid.userEmail || 'Unknown'}</span>
                   </div>
-                  <span className="font-black text-gray-900 text-lg">${bid.amount}</span>
+                  <span className="font-black font-display text-white text-xl tracking-wider">${bid.amount}</span>
                 </div>
               ))
             )}

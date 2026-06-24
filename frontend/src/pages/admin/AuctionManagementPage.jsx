@@ -22,7 +22,7 @@ const AuctionManagementPage = () => {
     const fetchAuctions = async () => {
       try {
         // Fetch ALL auctions, not just ACTIVE ones
-        const response = await api.get('/auctions');
+        const response = await api.get('/auctions/admin/all');
         setAuctions(response.data);
       } catch (err) {
         setError('Failed to load auctions.');
@@ -31,6 +31,10 @@ const AuctionManagementPage = () => {
       }
     };
     fetchAuctions();
+    
+    // Poll the backend every 5 seconds so admins see price jumps and status changes instantly
+    const interval = setInterval(fetchAuctions, 5000);
+    return () => clearInterval(interval);
   }, []);
 
   const openBidHistory = async (auctionId) => {

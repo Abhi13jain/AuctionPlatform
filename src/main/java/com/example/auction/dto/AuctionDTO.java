@@ -17,6 +17,7 @@ import java.time.LocalDateTime;
 public class AuctionDTO {
     private Long id;
     private Long motorcycleId;
+    private MotorcycleDTO motorcycle;
     private LocalDateTime startTime;
     private LocalDateTime endTime;
     private BigDecimal startingPrice;
@@ -29,6 +30,9 @@ public class AuctionDTO {
 
     public Long getMotorcycleId() { return motorcycleId; }
     public void setMotorcycleId(Long motorcycleId) { this.motorcycleId = motorcycleId; }
+
+    public MotorcycleDTO getMotorcycle() { return motorcycle; }
+    public void setMotorcycle(MotorcycleDTO motorcycle) { this.motorcycle = motorcycle; }
 
     public LocalDateTime getStartTime() { return startTime; }
     public void setStartTime(LocalDateTime startTime) { this.startTime = startTime; }

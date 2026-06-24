@@ -19,7 +19,7 @@ public class MotorcycleDTO {
     private String brand;
     private Integer year;
     private BigDecimal startingPrice;
-    private String imageUrl;
+    private java.util.List<String> imageUrls = new java.util.ArrayList<>();
     private MotorcycleStatus status;
 
     public Long getId() { return id; }
@@ -40,8 +40,8 @@ public class MotorcycleDTO {
     public BigDecimal getStartingPrice() { return startingPrice; }
     public void setStartingPrice(BigDecimal startingPrice) { this.startingPrice = startingPrice; }
 
-    public String getImageUrl() { return imageUrl; }
-    public void setImageUrl(String imageUrl) { this.imageUrl = imageUrl; }
+    public java.util.List<String> getImageUrls() { return imageUrls; }
+    public void setImageUrls(java.util.List<String> imageUrls) { this.imageUrls = imageUrls; }
 
     public MotorcycleStatus getStatus() { return status; }
     public void setStatus(MotorcycleStatus status) { this.status = status; }

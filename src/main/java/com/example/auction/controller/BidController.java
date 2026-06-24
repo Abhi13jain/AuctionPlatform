@@ -45,11 +45,14 @@ public class BidController {
         this.bucket = Bucket.builder().addLimit(limit).build();
     }
 
+    @Autowired
+    private com.example.auction.repository.UserRepository userRepository;
+
     /**
      * How a bid message travels from the browser to the server and back:
      * 1. The user clicks "Bid $500" on the website.
      * 2. The browser sends a STOMP message through the open WebSocket tunnel directly to `/app/auction/{auctionId}/bid`.
-     * 3. This `@MessageMapping` method catches it. We extract the bid amount and user ID.
+     * 3. This `@MessageMapping` method catches it. We extract the bid amount and user email.
      * 4. The `BidService` verifies the bid in milliseconds using Redis.
      * 5. If valid, the `@SendTo` annotation acts like a megaphone and instantly broadcasts the new `$500` price out to the `/topic/auction/{auctionId}` channel.
      * 6. Every other user staring at that auction page instantly sees the price jump to $500 without refreshing their page.
@@ -67,14 +70,16 @@ public class BidController {
         }
 
         try {
-            // Note: In a fully secure app, we extract the userId from the STOMP header's Principal (the JWT token).
-            // Here, we assume the frontend sends their valid userId in the message body.
-            return bidService.processBid(auctionId, incomingBid.getUserId(), incomingBid.getAmount());
+            // Find the user's numeric ID based on their email sent from the frontend
+            com.example.auction.model.User user = userRepository.findByEmail(incomingBid.getUserEmail())
+                    .orElseThrow(() -> new Exception("User not found: " + incomingBid.getUserEmail()));
+            
+            return bidService.processBid(auctionId, user.getId(), incomingBid.getAmount());
         } catch (Exception e) {
             // If the bid was too low or auction closed, send back an error message
             BidMessage errorResponse = new BidMessage();
             errorResponse.setAuctionId(auctionId);
-            errorResponse.setUserId(incomingBid.getUserId());
+            errorResponse.setUserEmail(incomingBid.getUserEmail());
             errorResponse.setAmount(incomingBid.getAmount());
             errorResponse.setStatusMessage("ERROR: " + e.getMessage());
             return errorResponse;
@@ -85,8 +90,23 @@ public class BidController {
      * REST endpoint to view the historical log of all bids placed on a specific auction.
      */
     @GetMapping("/api/auctions/{id}/bids")
-    public ResponseEntity<List<Bid>> getBidHistory(@PathVariable Long id) {
+    public ResponseEntity<List<BidMessage>> getBidHistory(@PathVariable Long id) {
         List<Bid> bids = bidRepository.findByAuctionIdOrderByTimestampDesc(id);
-        return ResponseEntity.ok(bids);
+        
+        List<BidMessage> dtos = bids.stream().map(bid -> {
+            BidMessage dto = new BidMessage();
+            dto.setAuctionId(bid.getAuctionId());
+            dto.setUserId(bid.getUserId());
+            dto.setAmount(bid.getAmount());
+            dto.setTimestamp(bid.getTimestamp());
+            dto.setStatusMessage("HISTORY");
+            
+            userRepository.findById(bid.getUserId())
+                    .ifPresent(user -> dto.setUserEmail(user.getEmail()));
+                    
+            return dto;
+        }).collect(java.util.stream.Collectors.toList());
+        
+        return ResponseEntity.ok(dtos);
     }
 }

@@ -12,7 +12,7 @@ import api from '../../services/api';
  */
 const CreateMotorcyclePage = () => {
   const [formData, setFormData] = useState({
-    title: '', description: '', brand: '', year: new Date().getFullYear(), startingPrice: '', imageUrl: '', status: 'AVAILABLE'
+    title: '', description: '', brand: '', year: new Date().getFullYear(), startingPrice: '', imageUrls: '', status: 'AVAILABLE'
   });
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
@@ -30,8 +30,13 @@ const CreateMotorcyclePage = () => {
     }
 
     try {
+      const payload = {
+        ...formData,
+        imageUrls: formData.imageUrls.split(',').map(url => url.trim()).filter(url => url.length > 0)
+      };
+      
       // The JWT Interceptor automatically attaches the Admin's token here!
-      await api.post('/motorcycles', formData);
+      await api.post('/motorcycles', payload);
       setSuccess('Motorcycle added successfully!');
       setTimeout(() => navigate('/admin/auctions/new'), 1500);
     } catch (err) {
@@ -74,8 +79,8 @@ const CreateMotorcyclePage = () => {
         </div>
 
         <div>
-          <label className="block text-sm font-bold text-gray-700 mb-1">Image URL</label>
-          <input type="url" value={formData.imageUrl} onChange={e => setFormData({...formData, imageUrl: e.target.value})} className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-brand-500" placeholder="https://..." />
+          <label className="block text-sm font-bold text-gray-700 mb-1">Image URLs (comma-separated)</label>
+          <input type="text" value={formData.imageUrls} onChange={e => setFormData({...formData, imageUrls: e.target.value})} className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-brand-500" placeholder="https://img1.jpg, https://img2.jpg..." />
         </div>
 
         <button type="submit" className="bg-brand-600 text-white font-bold py-3 px-6 rounded-lg hover:bg-brand-700 transition">

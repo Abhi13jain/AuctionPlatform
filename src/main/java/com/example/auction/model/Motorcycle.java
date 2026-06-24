@@ -46,7 +46,10 @@ public class Motorcycle {
     
     private BigDecimal startingPrice;
     
-    private String imageUrl;
+    @ElementCollection(fetch = FetchType.EAGER)
+    @CollectionTable(name = "motorcycle_images", joinColumns = @JoinColumn(name = "motorcycle_id"))
+    @Column(name = "image_url", length = 1000)
+    private java.util.List<String> imageUrls = new java.util.ArrayList<>();
 
     /**
      * @Enumerated(EnumType.STRING):
@@ -75,8 +78,8 @@ public class Motorcycle {
     public BigDecimal getStartingPrice() { return startingPrice; }
     public void setStartingPrice(BigDecimal startingPrice) { this.startingPrice = startingPrice; }
 
-    public String getImageUrl() { return imageUrl; }
-    public void setImageUrl(String imageUrl) { this.imageUrl = imageUrl; }
+    public java.util.List<String> getImageUrls() { return imageUrls; }
+    public void setImageUrls(java.util.List<String> imageUrls) { this.imageUrls = imageUrls; }
 
     public MotorcycleStatus getStatus() { return status; }
     public void setStatus(MotorcycleStatus status) { this.status = status; }

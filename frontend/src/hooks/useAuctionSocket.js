@@ -75,12 +75,12 @@ const useAuctionSocket = (auctionId, token, onMessageReceived) => {
     };
   }, [auctionId, token]);
 
-  const placeBid = (amount) => {
+  const placeBid = (amount, userEmail) => {
     if (stompClient.current && stompClient.current.connected) {
       // We send the bid to the specific auction queue on the backend
       stompClient.current.publish({
         destination: `/app/auction/${auctionId}/bid`,
-        body: JSON.stringify({ amount: parseFloat(amount) })
+        body: JSON.stringify({ auctionId: parseInt(auctionId), amount: parseFloat(amount), userEmail: userEmail })
       });
     }
   };

@@ -15,7 +15,10 @@ public class BidMessage {
     @NotNull(message = "Auction ID cannot be missing")
     private Long auctionId;
     
-    @NotNull(message = "User ID cannot be missing")
+    @NotNull(message = "User Email cannot be missing")
+    private String userEmail;
+    
+    // We keep userId for backend purposes but it's not required from frontend
     private Long userId;
     
     @NotNull(message = "Bid amount must be provided")
@@ -28,6 +31,9 @@ public class BidMessage {
 
     public Long getAuctionId() { return auctionId; }
     public void setAuctionId(Long auctionId) { this.auctionId = auctionId; }
+
+    public String getUserEmail() { return userEmail; }
+    public void setUserEmail(String userEmail) { this.userEmail = userEmail; }
 
     public Long getUserId() { return userId; }
     public void setUserId(Long userId) { this.userId = userId; }

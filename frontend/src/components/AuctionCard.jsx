@@ -15,37 +15,44 @@ const AuctionCard = ({ auction }) => {
   };
 
   return (
-    <div className="bg-white rounded-xl shadow-lg hover:shadow-xl transition duration-300 overflow-hidden border border-gray-100 flex flex-col">
+    <div className="bg-dark-800 rounded-xl shadow-xl hover:shadow-2xl hover:border-brand-500 transition duration-300 overflow-hidden border border-dark-700 flex flex-col group">
       {/* Top Banner indicating status */}
       <div className={`p-2 text-center text-sm font-bold text-white uppercase tracking-wider ${
         auction.status === 'ACTIVE' ? 'bg-green-500' : 'bg-yellow-500'
       }`}>
         {auction.status}
       </div>
+      
+      {auction.motorcycle && auction.motorcycle.imageUrls && auction.motorcycle.imageUrls.length > 0 && (
+        <div className="relative overflow-hidden">
+          <img src={auction.motorcycle.imageUrls[0]} alt="Motorcycle" className="w-full h-48 object-cover border-b border-dark-700 group-hover:scale-105 transition duration-500" />
+          <div className="absolute inset-0 bg-gradient-to-t from-dark-800 to-transparent opacity-60"></div>
+        </div>
+      )}
 
       <div className="p-6 flex flex-col flex-grow">
-        <h3 className="text-xl font-extrabold text-gray-900 mb-2 truncate">
-          Motorcycle ID: {auction.motorcycleId}
+        <h3 className="text-2xl font-display uppercase tracking-wide text-white mb-2 truncate">
+          {auction.motorcycle ? `${auction.motorcycle.year} ${auction.motorcycle.brand} ${auction.motorcycle.title}` : `Motorcycle #${auction.motorcycleId}`}
         </h3>
         
         <div className="flex justify-between items-end mt-4 mb-6">
           <div>
-            <p className="text-sm text-gray-500 font-medium uppercase tracking-wide">Current Price</p>
-            <p className="text-3xl font-black text-brand-600">
+            <p className="text-sm text-gray-400 font-medium uppercase tracking-widest">Current Price</p>
+            <p className="text-3xl font-black text-brand-500 font-display tracking-wider">
               {formatPrice(auction.currentPrice)}
             </p>
           </div>
         </div>
 
-        <div className="bg-gray-50 p-4 rounded-lg mt-auto">
-          <p className="text-sm text-gray-500 uppercase font-semibold mb-1">Time Remaining</p>
-          <p className={`text-lg font-bold ${timeLeft === 'Auction Ended' ? 'text-red-500' : 'text-gray-800'}`}>
+        <div className="bg-dark-900 border border-dark-700 p-4 rounded-lg mt-auto shadow-inner">
+          <p className="text-xs text-gray-500 uppercase font-bold mb-1 tracking-widest">Time Remaining</p>
+          <p className={`text-lg font-black font-display tracking-widest ${timeLeft === 'Auction Ended' ? 'text-brand-600' : 'text-gray-100'}`}>
             {timeLeft}
           </p>
         </div>
         
         {auction.status === 'ACTIVE' && (
-          <Link to={`/auctions/${auction.id}`} className="w-full mt-4 bg-brand-600 hover:bg-brand-700 text-white font-bold py-3 px-4 rounded-lg transition text-center block">
+          <Link to={`/auctions/${auction.id}`} className="w-full mt-5 bg-brand-600 hover:bg-brand-500 text-white font-bold font-display tracking-widest uppercase py-4 px-4 rounded-lg transition text-center block shadow-lg shadow-brand-500/20">
             Enter Live Room
           </Link>
         )}

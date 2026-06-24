@@ -27,6 +27,10 @@ const AuctionList = () => {
     };
 
     fetchAuctions();
+    
+    // Poll the backend every 5 seconds to automatically update prices and statuses
+    const interval = setInterval(fetchAuctions, 5000);
+    return () => clearInterval(interval);
   }, []);
 
   if (loading) return <div className="text-center mt-20 text-xl font-bold text-gray-500 animate-pulse">Loading Live Auctions...</div>;
@@ -36,14 +40,14 @@ const AuctionList = () => {
     <div className="py-8">
       <div className="flex justify-between items-end mb-8">
         <div>
-          <h1 className="text-4xl font-black text-gray-900 tracking-tight">Live Auctions</h1>
-          <p className="text-gray-500 mt-2 font-medium">Bid on premium motorcycles instantly.</p>
+          <h1 className="text-4xl font-black text-white tracking-tight uppercase">Live Auctions</h1>
+          <p className="text-gray-400 mt-2 font-medium">Bid on premium motorcycles instantly.</p>
         </div>
       </div>
 
       {auctions.length === 0 ? (
-        <div className="text-center py-20 bg-white rounded-xl shadow-sm border border-gray-100">
-          <p className="text-gray-500 text-lg">No active auctions at the moment. Check back later!</p>
+        <div className="text-center py-20 bg-dark-800 rounded-xl shadow-sm border border-dark-700">
+          <p className="text-gray-400 text-lg">No active auctions at the moment. Check back later!</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">

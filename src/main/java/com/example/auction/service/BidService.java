@@ -24,6 +24,9 @@ public class BidService {
     private AuctionRepository auctionRepository;
 
     @Autowired
+    private com.example.auction.repository.UserRepository userRepository;
+
+    @Autowired
     private StringRedisTemplate redisTemplate;
 
     /**
@@ -87,10 +90,14 @@ public class BidService {
         bid.setTimestamp(LocalDateTime.now());
         bidRepository.save(bid);
 
+        // We need the email for the broadcast message so the frontend can display who bid
+        com.example.auction.model.User user = userRepository.findById(userId).orElseThrow(() -> new Exception("User not found"));
+
         // Prepare the success message to broadcast
         BidMessage response = new BidMessage();
         response.setAuctionId(auctionId);
         response.setUserId(userId);
+        response.setUserEmail(user.getEmail());
         response.setAmount(amount);
         response.setTimestamp(bid.getTimestamp());
         response.setStatusMessage("SUCCESS");

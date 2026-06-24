@@ -33,11 +33,11 @@ const CreateAuctionPage = () => {
     e.preventDefault();
     setError('');
     
-    // Convert to ISO strings for Spring Boot
+    // Send local time strings exactly as inputted so backend parses them correctly in local timezone
     const payload = {
       ...formData,
-      startTime: new Date(formData.startTime).toISOString(),
-      endTime: new Date(formData.endTime).toISOString()
+      startTime: new Date(formData.startTime).toISOString().substring(0, 19),
+      endTime: new Date(formData.endTime).toISOString().substring(0, 19)
     };
 
     if (new Date(payload.startTime) >= new Date(payload.endTime)) {

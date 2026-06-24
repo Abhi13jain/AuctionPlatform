@@ -18,7 +18,10 @@ const useCountdown = (targetDate) => {
     if (!targetDate) return;
 
     const calculateTimeLeft = () => {
-      const difference = new Date(targetDate).getTime() - new Date().getTime();
+      // The backend sends targetDate in UTC but without timezone metadata (e.g., '2026-06-25T10:00:00')
+      // By appending 'Z', we force the browser to interpret this time correctly as UTC instead of local time
+      const dateString = targetDate.endsWith('Z') ? targetDate : `${targetDate}Z`;
+      const difference = new Date(dateString).getTime() - new Date().getTime();
 
       if (difference <= 0) {
         setTimeLeft('Auction Ended');

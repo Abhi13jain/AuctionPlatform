@@ -66,7 +66,7 @@ public class MotorcycleController {
         motorcycle.setBrand(dto.getBrand());
         motorcycle.setYear(dto.getYear());
         motorcycle.setStartingPrice(dto.getStartingPrice());
-        motorcycle.setImageUrl(dto.getImageUrl());
+        motorcycle.setImageUrls(dto.getImageUrls());
         // Default to AVAILABLE if not provided
         motorcycle.setStatus(dto.getStatus() != null ? dto.getStatus() : MotorcycleStatus.AVAILABLE);
 
@@ -94,7 +94,7 @@ public class MotorcycleController {
             existing.setBrand(dto.getBrand());
             existing.setYear(dto.getYear());
             existing.setStartingPrice(dto.getStartingPrice());
-            existing.setImageUrl(dto.getImageUrl());
+            existing.setImageUrls(dto.getImageUrls());
             existing.setStatus(dto.getStatus());
             Motorcycle updated = motorcycleRepository.save(existing);
             return ResponseEntity.ok(convertToDTO(updated));
@@ -132,7 +132,7 @@ public class MotorcycleController {
         dto.setBrand(motorcycle.getBrand());
         dto.setYear(motorcycle.getYear());
         dto.setStartingPrice(motorcycle.getStartingPrice());
-        dto.setImageUrl(motorcycle.getImageUrl());
+        dto.setImageUrls(motorcycle.getImageUrls());
         dto.setStatus(motorcycle.getStatus());
         return dto;
     }

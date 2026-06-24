@@ -58,13 +58,21 @@ public class AuctionController {
         return ResponseEntity.ok(convertToDTO(savedAuction));
     }
 
-    /**
-     * What this does in one plain sentence:
-     * Returns a public list of all the auctions that are currently active right now.
-     */
     @GetMapping
     public List<AuctionDTO> getActiveAuctions() {
         return auctionService.getActiveAuctions().stream()
+                .map(this::convertToDTO)
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * What this does in one plain sentence:
+     * Returns a list of every single auction (Active, Scheduled, Ended) for the administrator.
+     */
+    @GetMapping("/admin/all")
+    @PreAuthorize("hasRole('ADMIN')")
+    public List<AuctionDTO> getAllAuctions() {
+        return auctionService.getAllAuctions().stream()
                 .map(this::convertToDTO)
                 .collect(Collectors.toList());
     }
@@ -91,6 +99,15 @@ public class AuctionController {
         dto.setId(auction.getId());
         if (auction.getMotorcycle() != null) {
             dto.setMotorcycleId(auction.getMotorcycle().getId());
+            
+            com.example.auction.dto.MotorcycleDTO motoDto = new com.example.auction.dto.MotorcycleDTO();
+            motoDto.setId(auction.getMotorcycle().getId());
+            motoDto.setTitle(auction.getMotorcycle().getTitle());
+            motoDto.setDescription(auction.getMotorcycle().getDescription());
+            motoDto.setBrand(auction.getMotorcycle().getBrand());
+            motoDto.setYear(auction.getMotorcycle().getYear());
+            motoDto.setImageUrls(auction.getMotorcycle().getImageUrls());
+            dto.setMotorcycle(motoDto);
         }
         dto.setStartTime(auction.getStartTime());
         dto.setEndTime(auction.getEndTime());

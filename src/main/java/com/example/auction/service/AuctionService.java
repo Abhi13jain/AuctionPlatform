@@ -70,16 +70,15 @@ public class AuctionService {
         auctionRepository.save(auction);
     }
 
-    /**
-     * What this does in one plain sentence:
-     * Transitions an auction to ENDED and marks the motorcycle as SOLD.
-     */
     public void endAuction(Auction auction) {
         auction.setStatus(AuctionStatus.ENDED);
         if (auction.getMotorcycle() != null) {
-            // Note: In reality, if there are no bids, we might set it back to AVAILABLE.
-            // For now, we assume it's SOLD if the auction successfully ends.
-            auction.getMotorcycle().setStatus(MotorcycleStatus.SOLD);
+            // If there is a winner, the motorcycle is SOLD. If there are no bids, it becomes AVAILABLE again.
+            if (auction.getWinnerId() != null) {
+                auction.getMotorcycle().setStatus(MotorcycleStatus.SOLD);
+            } else {
+                auction.getMotorcycle().setStatus(MotorcycleStatus.AVAILABLE);
+            }
         }
         auctionRepository.save(auction);
     }
@@ -90,6 +89,14 @@ public class AuctionService {
      */
     public List<Auction> getActiveAuctions() {
         return auctionRepository.findByStatus(AuctionStatus.ACTIVE);
+    }
+
+    /**
+     * What this does in one plain sentence:
+     * Returns a list of all auctions regardless of status.
+     */
+    public List<Auction> getAllAuctions() {
+        return auctionRepository.findAll();
     }
 
     /**
